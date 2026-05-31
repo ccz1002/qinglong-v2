@@ -33,10 +33,12 @@ case "$opt" in
     echo ">>> 更新完成"
     ;;
   3)
-    read -p "确认卸载？数据目录将保留 [y/N]: " cf
+    read -p "确认卸载？将删除容器、镜像和数据！[y/N]: " cf
     if [ "$cf" = "y" ] || [ "$cf" = "Y" ]; then
       docker rm -f "$NAME" 2>/dev/null
-      echo ">>> 已卸载，数据保留在 $DIR"
+      docker rmi "$IMG" 2>/dev/null
+      rm -rf "$DIR"
+      echo ">>> 已卸载，全部清除"
     else
       echo ">>> 已取消"
     fi
