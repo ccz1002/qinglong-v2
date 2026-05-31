@@ -66,6 +66,7 @@ declare namespace Api {
     interface LoginParams {
       userName: string
       password: string
+      twoFactorCode?: string // 青龙面板双因素验证码
     }
 
     /** 登录响应 */

@@ -41,6 +41,11 @@ function checkAuthPermission(el: HTMLElement, binding: DirectiveBinding<string>)
   // 获取当前路由的权限列表
   const authList = (router.currentRoute.value.meta.authList as Array<{ authMark: string }>) || []
 
+  // 如果 authList 为空（菜单来自后端但未配置权限列表），则放行所有操作
+  if (authList.length === 0) {
+    return
+  }
+
   // 检查是否有对应的权限标识
   const hasPermission = authList.some((item) => item.authMark === binding.value)
 

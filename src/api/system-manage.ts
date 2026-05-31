@@ -17,9 +17,32 @@ export function fetchGetRoleList(params: Api.SystemManage.RoleSearchParams) {
   })
 }
 
-// 获取菜单列表
+// 获取菜单列表 (青龙面板后端 API)
 export function fetchGetMenuList() {
   return request.get<AppRouteRecord[]>({
-    url: '/api/v3/system/menus'
+    url: '/api/menus'
+  })
+}
+
+// 创建菜单
+export function fetchCreateMenu(data: any) {
+  return request.post({
+    url: '/api/menus',
+    data
+  })
+}
+
+// 更新菜单
+export function fetchUpdateMenu(id: number, data: any) {
+  return request.put({
+    url: `/api/menus/${id}`,
+    data
+  })
+}
+
+// 删除菜单
+export function fetchDeleteMenu(id: number) {
+  return request.del({
+    url: `/api/menus/${id}`
   })
 }

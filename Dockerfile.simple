@@ -1,0 +1,3 @@
+# 直接用预编译的 dist，服务器上不需要 Node.js
+FROM whyour/qinglong:latest
+COPY dist /ql/static/dist
