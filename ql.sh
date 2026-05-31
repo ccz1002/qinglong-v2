@@ -4,31 +4,46 @@ NAME="qinglong"
 PORT="5700"
 DIR="/opt/qinglong/data"
 
-case "$1" in
-  install)
-    echo ">>> Installing QingLong..."
+clear
+echo "========================================="
+echo "  青龙面板 (Art Design Pro 新版) 管理脚本"
+echo "========================================="
+echo "  1. 安装"
+echo "  2. 更新"
+echo "  3. 卸载"
+echo "  4. 查看状态"
+echo "  0. 退出"
+echo "========================================="
+read -p "请选择 [1-4]: " opt
+
+case "$opt" in
+  1)
+    echo ">>> 安装中..."
     mkdir -p "$DIR"
     docker pull "$IMG"
     docker rm -f "$NAME" 2>/dev/null
     docker run -d --name "$NAME" -p "$PORT:5700" -v "$DIR:/ql/data" --restart unless-stopped "$IMG"
-    echo ">>> Done: http://YOUR_IP:$PORT"
+    echo ">>> 安装完成！访问 http://$(curl -s ip.sb):$PORT"
     ;;
-  update)
-    echo ">>> Updating QingLong..."
+  2)
+    echo ">>> 更新中..."
     docker pull "$IMG"
     docker rm -f "$NAME" 2>/dev/null
     docker run -d --name "$NAME" -p "$PORT:5700" -v "$DIR:/ql/data" --restart unless-stopped "$IMG"
-    echo ">>> Updated"
+    echo ">>> 更新完成"
     ;;
-  uninstall)
-    echo ">>> Removing QingLong (data kept at $DIR)..."
-    docker rm -f "$NAME" 2>/dev/null
-    echo ">>> Done"
+  3)
+    read -p "确认卸载？数据目录将保留 [y/N]: " cf
+    if [ "$cf" = "y" ] || [ "$cf" = "Y" ]; then
+      docker rm -f "$NAME" 2>/dev/null
+      echo ">>> 已卸载，数据保留在 $DIR"
+    else
+      echo ">>> 已取消"
+    fi
     ;;
-  status)
+  4)
     docker ps -a --filter "name=$NAME" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
     ;;
-  *)
-    echo "Usage: ./ql.sh install | update | uninstall | status"
-    ;;
+  0) echo ">>> 退出";;
+  *) echo ">>> 无效选项";;
 esac
