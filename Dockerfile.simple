@@ -1,3 +1,9 @@
-# 直接用预编译的 dist，服务器上不需要 Node.js
+# 前端 dist + 后端菜单管理 API
 FROM whyour/qinglong:latest
 COPY dist /ql/static/dist
+COPY backend/api/menu.js /ql/static/build/api/menu.js
+COPY backend/api/index.js /ql/static/build/api/index.js
+COPY backend/services/menu.js /ql/static/build/services/menu.js
+COPY backend/data/menu.js /ql/static/build/data/menu.js
+COPY backend/loaders/db.js /ql/static/build/loaders/db.js
+COPY backend/loaders/initData.js /ql/static/build/loaders/initData.js
