@@ -306,3 +306,9 @@ onMounted(loadTree)
 .script-editor { flex: 1; overflow: hidden; }
 .editor-empty { display: flex; align-items: center; justify-content: center; height: 100%; color: #999; flex-direction: column; gap: 8px; }
 </style>
+@media (max-width: 768px) {
+  .script-body { flex-direction: column; }
+  .script-tree { width: 100% !important; max-height: 200px; border-right: none; border-bottom: 1px solid #eee; }
+  .script-toolbar { flex-wrap: wrap; gap: 4px; }
+  .toolbar-actions { flex-wrap: wrap; }
+}

@@ -327,3 +327,8 @@ onUnmounted(stopLogPoll)
 .view-more { font-weight: bold; padding: 0 2px; opacity: 0.5; }
 .view-more:hover { opacity: 1; }
 </style>
+@media (max-width: 768px) {
+  .toolbar { flex-wrap: wrap; gap: 6px; }
+  .toolbar .el-input { width: 100% !important; }
+  .view-tab { font-size: 12px; padding: 3px 8px; }
+}

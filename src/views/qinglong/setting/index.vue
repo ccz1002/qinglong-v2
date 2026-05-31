@@ -462,3 +462,8 @@ onMounted(() => {
   max-height: 500px; overflow: auto; white-space: pre-wrap;
 }
 </style>
+@media (max-width: 768px) {
+  .el-tabs__nav { flex-wrap: wrap; }
+  .el-form { max-width: 100% !important; }
+  .el-descriptions { font-size: 12px; }
+}

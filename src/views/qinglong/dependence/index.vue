@@ -202,3 +202,8 @@ onUnmounted(() => {
 .log-viewer { background: #1e1e1e; color: #d4d4d4; border-radius: 6px; padding: 12px; max-height: 500px; overflow: auto; }
 .log-viewer pre { margin: 0; font-family: Consolas, monospace; font-size: 13px; line-height: 1.5; white-space: pre-wrap; word-break: break-all; }
 </style>
+@media (max-width: 768px) {
+  .toolbar { flex-wrap: wrap; gap: 6px; }
+  .toolbar .el-input { width: 100% !important; }
+  .el-radio-group { flex-wrap: wrap; }
+}

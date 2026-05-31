@@ -171,3 +171,7 @@ onMounted(loadData)
 .batch-bar { background: #e8f0fe; border: 1px solid #b3d4fc; border-radius: 6px; padding: 8px 12px; margin-bottom: 10px; display: flex; align-items: center; gap: 4px; }
 .value-cell { font-family: monospace; font-size: 12px; }
 </style>
+@media (max-width: 768px) {
+  .toolbar { flex-wrap: wrap; gap: 6px; }
+  .toolbar .el-input { width: 100% !important; }
+}

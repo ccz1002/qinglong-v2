@@ -94,3 +94,7 @@ onMounted(loadData)
 <style scoped>
 .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 </style>
+@media (max-width: 768px) {
+  .toolbar { flex-wrap: wrap; gap: 6px; }
+  .toolbar .el-input { width: 100% !important; }
+}
