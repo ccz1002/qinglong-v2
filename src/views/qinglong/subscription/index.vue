@@ -73,6 +73,7 @@ const showEdit = (row: any|null) => {
 }
 const saveSub = async () => {
   if (!editForm.name) { ElMessage.warning('名称必填'); return }
+  if (!editForm.url) { ElMessage.warning('仓库地址必填'); return }
   saving.value = true
   try {
     const data = { ...editForm }

@@ -194,7 +194,8 @@ const getSchedType = (s: string) => {
 }
 
 const onSchedTypeChange = () => {
-  if (scheduleType.value!=='normal') { editForm.schedule = scheduleType.value==='once'?'@once':'@boot'; cronError.value=''; cronNext.value='' }
+  if (scheduleType.value === 'normal') { editForm.schedule = ''; cronError.value = ''; cronNext.value = '' }
+  else { editForm.schedule = scheduleType.value === 'once' ? '@once' : '@boot'; cronError.value = ''; cronNext.value = '' }
 }
 
 const validateCron = () => { cronError.value = ''; cronNext.value = editForm.schedule ? '已输入' : ''; }

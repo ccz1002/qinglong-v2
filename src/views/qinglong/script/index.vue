@@ -145,10 +145,12 @@ const loadTree = async () => {
 
 const loadContent = async (node: any) => {
   try {
-    const data = await request.get<any>({ url: '/api/scripts/detail', params: { file: node.title, path: node.parent || '' } })
+    const file = node.title || node.name || node.label || ''
+    const parentPath = node.parent || ''
+    const data = await request.get<any>({ url: '/api/scripts/detail', params: { file, path: parentPath } })
     content.value = typeof data === 'string' ? data : data?.content || data || ''
     originalContent.value = content.value
-  } catch (e) { console.error(e) }
+  } catch (e) { content.value = '// 加载失败: ' + (e?.message || '未知错误'); console.error(e) }
 }
 
 const onNodeClick = (node: any) => {

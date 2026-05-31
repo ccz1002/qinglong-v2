@@ -101,7 +101,7 @@ const saveEnv = async () => {
   if (!editForm.name) { ElMessage.warning('名称必填'); return }
   saving.value = true
   try {
-    const data: any = { name: editForm.name, value: editForm.value, remarks: editForm.remarks, labels: editLabels.value }
+    const data: any = { name: editForm.name, value: editForm.value || '', remarks: editForm.remarks, labels: editLabels.value }
     if (editId.value) { data.id = editId.value; await request.put({ url: '/api/envs', data }) }
     else { await request.post({ url: '/api/envs', data: [data] }) }
     ElMessage.success('保存成功'); editVisible.value = false; loadData()
