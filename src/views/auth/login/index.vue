@@ -219,6 +219,17 @@ const startRetryCountdown = (seconds: number) => {
   }, 1000)
 }
 
+// 检查是否已初始化，未初始化跳初始化页
+onMounted(async () => {
+  try {
+    const res = await fetch('/api/system')
+    const json = await res.json()
+    if (json.code === 200 && json.data && !json.data.isInitialized) {
+      router.replace({ name: 'Init' })
+    }
+  } catch {}
+})
+
 onUnmounted(() => {
   if (retryTimer) clearInterval(retryTimer)
 })
