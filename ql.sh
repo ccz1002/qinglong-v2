@@ -78,6 +78,8 @@ direct_deploy() {
     mkdir -p "$QL_DIR"/{static,data,log,repo,raw,scripts,config,deps}
   fi
 
+  mkdir -p "$QL_DIR/static"
+
   echo -e "${GREEN}>>> 替换前端...${NC}"
   rm -rf "$QL_DIR/static/dist"
   cp -r "$TMPDIR/dist" "$QL_DIR/static/dist"
