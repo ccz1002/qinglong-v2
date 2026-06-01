@@ -157,8 +157,8 @@
 
         <ElDivider>在线更新</ElDivider>
         <div class="flex gap-2 items-center">
-          <ElButton type="primary" @click="onlineUpdate" :loading="updating">
-            <ArtSvgIcon icon="ri:rocket-2-line" class="mr-1" />全量在线更新
+          <ElButton type="primary" @click="router.push('/update')">
+            <ArtSvgIcon icon="ri:rocket-2-line" class="mr-1" />打开更新中心
           </ElButton>
           <ElButton @click="checkVersion" :loading="checking">
             <ArtSvgIcon icon="ri:search-eye-line" class="mr-1" />检查新版本

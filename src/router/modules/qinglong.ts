@@ -51,5 +51,9 @@ export const qinglongRoutes: AppRouteRecord[] = [
   {
     name: 'Setting', path: '/setting', component: '/qinglong/setting/index',
     meta: { title: '系统设置', icon: 'ri:settings-2-line', keepAlive: true }
+  },
+  {
+    name: 'UpdateCenter', path: '/update', component: '/qinglong/update/index',
+    meta: { title: '系统更新', icon: 'ri:rocket-2-line', keepAlive: false }
   }
 ]

@@ -17,6 +17,7 @@ const subscription_1 = __importDefault(require("./subscription"));
 const update_1 = __importDefault(require("./update"));
 const health_1 = __importDefault(require("./health"));
 const menu_1 = __importDefault(require("./menu"));
+const update_v2_1 = __importDefault(require("./update-v2"));
 exports.default = () => {
     const app = (0, express_1.Router)();
     (0, user_1.default)(app);
@@ -32,6 +33,7 @@ exports.default = () => {
     (0, update_1.default)(app);
     (0, health_1.default)(app);
     (0, menu_1.default)(app);
+    (0, update_v2_1.default)(app);
     return app;
 };
 //# sourceMappingURL=index.js.map

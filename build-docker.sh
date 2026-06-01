@@ -3,7 +3,6 @@
 # 本地构建 Docker 镜像并推送到 Docker Hub
 # 用法: bash build-docker.sh
 # ============================================
-set -e
 
 IMG="ncuon/qinglong-v2:latest"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -16,8 +15,8 @@ echo "============================================"
 # 1. 构建前端
 echo "[1/3] 构建前端..."
 cd "$SCRIPT_DIR"
-pnpm install --no-frozen-lockfile 2>/dev/null || pnpm install
-pnpm exec vite build
+pnpm install --no-frozen-lockfile 2>/dev/null || true
+npx vite build
 
 # 2. 准备 Docker 上下文
 echo "[2/3] 准备 Docker 上下文..."
