@@ -2,7 +2,7 @@
   <div class="ql-setting">
     <ElTabs v-model="activeTab" type="border-card">
       <!-- 安全设置 -->
-      <ElTabPane label="安全设置" name="security">
+      <ElTabPane name="security"><template #label><ArtSvgIcon icon="ri:shield-check-line" class="mr-1.5" />安全设置</template>
         <ElCard header="修改密码">
           <ElForm ref="secFormRef" :model="secForm" :rules="secRules" label-width="100px" style="max-width:400px">
             <ElFormItem label="用户名" prop="username"><ElInput v-model="secForm.username" /></ElFormItem>
@@ -34,7 +34,7 @@
       </ElTabPane>
 
       <!-- 应用设置 -->
-      <ElTabPane label="应用设置" name="apps">
+      <ElTabPane name="apps"><template #label><ArtSvgIcon icon="ri:apps-2-line" class="mr-1.5" />应用设置</template>
         <div class="flex justify-between mb-3">
           <span>Open API 应用管理</span>
           <ElButton type="primary" size="small" @click="showAppDialog(null)">+ 添加应用</ElButton>
@@ -73,7 +73,7 @@
       </ElTabPane>
 
       <!-- 通知设置 -->
-      <ElTabPane label="通知设置" name="notify">
+      <ElTabPane name="notify"><template #label><ArtSvgIcon icon="ri:notification-3-line" class="mr-1.5" />通知设置</template>
         <ElForm :model="notifyForm" label-width="140px" style="max-width:700px">
           <template v-for="(cfg, mode) in notifyModes" :key="mode">
             <ElDivider content-position="left">{{ modeNames[mode] || mode }}</ElDivider>
@@ -86,7 +86,7 @@
       </ElTabPane>
 
       <!-- 系统日志 -->
-      <ElTabPane label="系统日志" name="syslog">
+      <ElTabPane name="syslog"><template #label><ArtSvgIcon icon="ri:file-search-line" class="mr-1.5" />系统日志</template>
         <div class="flex gap-2 mb-3">
           <ElDatePicker v-model="syslogDateRange" type="datetimerange" range-separator="至" start-placeholder="开始" end-placeholder="结束" />
           <ElButton @click="loadSyslog">查询</ElButton>
@@ -97,7 +97,7 @@
       </ElTabPane>
 
       <!-- 登录日志 -->
-      <ElTabPane label="登录日志" name="loginlog">
+      <ElTabPane name="loginlog"><template #label><ArtSvgIcon icon="ri:login-box-line" class="mr-1.5" />登录日志</template>
         <ElTable :data="loginLogs" v-loading="loginLogLoading" stripe>
           <ElTableColumn label="时间" width="170">
             <template #default="{ row }">{{ row.timestamp ? new Date(row.timestamp).toLocaleString() : '-' }}</template>
@@ -112,7 +112,7 @@
       </ElTabPane>
 
       <!-- 依赖设置 -->
-      <ElTabPane label="依赖设置" name="depconfig">
+      <ElTabPane name="depconfig"><template #label><ArtSvgIcon icon="ri:archive-line" class="mr-1.5" />依赖设置</template>
         <ElForm :model="depConfig" label-width="140px" style="max-width:500px">
           <ElFormItem label="Node 镜像源"><ElInput v-model="depConfig.nodeMirror" placeholder="https://registry.npmmirror.com" /></ElFormItem>
           <ElFormItem label="Python 镜像源"><ElInput v-model="depConfig.pythonMirror" placeholder="https://pypi.tuna.tsinghua.edu.cn/simple" /></ElFormItem>
@@ -123,7 +123,7 @@
       </ElTabPane>
 
       <!-- 其他设置 -->
-      <ElTabPane label="其他设置" name="other">
+      <ElTabPane name="other"><template #label><ArtSvgIcon icon="ri:settings-3-line" class="mr-1.5" />其他设置</template>
         <ElForm :model="otherForm" label-width="160px" style="max-width:600px">
           <ElFormItem label="日志删除频率(天)">
             <ElInputNumber v-model="otherForm.logRemoveFrequency" :min="1" :max="365" />
