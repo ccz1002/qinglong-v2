@@ -4,17 +4,13 @@
       <template #header><span>日志目录</span></template>
       <ElTree
         :data="treeData"
-        :props="{ children: 'children', label: 'name' }"
-        node-key="path"
+        :props="{ children: 'children', label: 'title' }"
+        node-key="key"
         highlight-current
-        @node-click="(node: any) => openFile(node.path)"
+        @node-click="(node: any) => openFile(node)"
         :filter-node-method="filterTree"
         default-expand-all
-      >
-        <template #default="{ node }">
-          <span>{{ node.label }}</span>
-        </template>
-      </ElTree>
+      />
     </ElCard>
 
     <ElCard class="flex-1 flex flex-col">
@@ -46,28 +42,34 @@ const buildTree = (data: any): any[] => {
   if (!data) return []
   if (Array.isArray(data)) {
     return data.map((item: any) => ({
-      name: item.name || item,
-      path: item.path || item,
+      title: item.title || item.name || item,
+      key: item.key || item.path || item,
+      type: item.type,
+      parent: item.parent || '',
+      size: item.size,
+      createTime: item.createTime,
       children: item.children ? buildTree(item.children) : undefined
     }))
   }
-  return Object.entries(data).map(([key, val]: [string, any]) => ({
-    name: key,
-    path: val.path || key,
-    children: typeof val === 'object' && !Array.isArray(val) ? buildTree(val) : undefined
+  return Object.entries(data).map(([k, v]: [string, any]) => ({
+    title: v.title || k,
+    key: v.key || k,
+    type: v.type,
+    parent: v.parent || '',
+    children: typeof v === 'object' && !Array.isArray(v) ? buildTree(v) : undefined
   }))
 }
 
 const filterTree = (value: string, data: any) => {
   if (!value) return true
-  return data.name?.toLowerCase().includes(value.toLowerCase())
+  return data.title?.toLowerCase().includes(value.toLowerCase())
 }
 
-const openFile = async (path: string) => {
-  if (!path) return
-  currentFile.value = path
+const openFile = async (node: any) => {
+  if (!node || node.type === 'directory') return
+  currentFile.value = node.title
   try {
-    const res = await qlLogApi.detail(path)
+    const res = await qlLogApi.detail(node.title, node.parent || '')
     logContent.value = typeof res === 'string' ? res : res?.content || res?.data || JSON.stringify(res)
   } catch (e: any) {
     logContent.value = '加载失败: ' + (e?.message || '')
@@ -77,7 +79,16 @@ const openFile = async (path: string) => {
 const handleDelete = async () => {
   try {
     await ElMessageBox.confirm(`确定删除 "${currentFile.value}"？`, '警告', { type: 'warning' })
-    await qlLogApi.remove(currentFile.value)
+    // 从 treeData 查找当前节点获取 parent
+    const findNode = (nodes: any[]): any => {
+      for (const n of nodes) {
+        if (n.title === currentFile.value) return n
+        if (n.children) { const found = findNode(n.children); if (found) return found }
+      }
+      return null
+    }
+    const node = findNode(treeData.value)
+    await qlLogApi.remove(currentFile.value, node?.parent || '')
     ElMessage.success('已删除')
     currentFile.value = ''
     logContent.value = ''

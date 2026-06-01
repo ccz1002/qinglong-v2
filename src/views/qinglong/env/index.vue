@@ -99,6 +99,7 @@ const addTag = () => { const t = newTag.value.trim(); if (t) { editLabels.value.
 
 const saveEnv = async () => {
   if (!editForm.name) { ElMessage.warning('名称必填'); return }
+  if (!/^[a-zA-Z_][0-9a-zA-Z_]*$/.test(editForm.name)) { ElMessage.warning('名称必须以字母或下划线开头，只能包含字母、数字、下划线'); return }
   saving.value = true
   try {
     const data: any = { name: editForm.name, value: editForm.value || '', remarks: editForm.remarks, labels: editLabels.value }
@@ -112,10 +113,7 @@ const saveEnv = async () => {
 // 排序
 const move = async (row: any, index: number, dir: number) => {
   const target = envList.value[index + dir]; if (!target) return
-  const posA = row.position || index * 1e10 + 4.5e12
-  const posB = target.position || (index + dir) * 1e10 + 4.5e12
-  const newPos = dir > 0 ? posB + 1 : posB - 1
-  try { await request.put({ url: `/api/envs/${row.id}/move`, data: { position: newPos } }); loadData() }
+  try { await request.put({ url: `/api/envs/${row.id}/move`, data: { fromIndex: index, toIndex: index + dir } }); loadData() }
   catch (e:any) { ElMessage.error('排序失败') }
 }
 

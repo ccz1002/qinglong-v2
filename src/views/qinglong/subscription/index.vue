@@ -37,6 +37,12 @@
         <ElFormItem label="仓库地址"><ElInput v-model="editForm.url" placeholder="git URL 或文件 URL" /></ElFormItem>
         <ElFormItem label="分支"><ElInput v-model="editForm.branch" placeholder="默认 main" /></ElFormItem>
         <ElFormItem label="定时规则"><ElInput v-model="editForm.schedule" placeholder="如 0 8 * * *" /></ElFormItem>
+        <ElFormItem label="定时类型" required>
+          <ElSelect v-model="editForm.schedule_type">
+            <ElOption label="Crontab" value="crontab" />
+            <ElOption label="Interval" value="interval" />
+          </ElSelect>
+        </ElFormItem>
       </ElForm>
       <template #footer>
         <ElButton @click="editVisible=false">取消</ElButton>
@@ -65,10 +71,11 @@ const toggleRun = async (row: any) => {
 }
 
 const editVisible = ref(false); const saving = ref(false); const editId = ref<number|null>(null)
-const editForm = reactive({ name:'',type:'public-repo',url:'',branch:'',schedule:'' })
+const editForm = reactive({ name:'',type:'public-repo',url:'',branch:'',schedule:'',schedule_type:'crontab',alias:'' })
 const showEdit = (row: any|null) => {
   editId.value = row?.id||null; editForm.name=row?.name||''; editForm.type=row?.type||'public-repo'
   editForm.url=row?.url||''; editForm.branch=row?.branch||''; editForm.schedule=row?.schedule||''
+  editForm.schedule_type=row?.schedule_type||'crontab'; editForm.alias=row?.alias||row?.name||''
   editVisible.value = true
 }
 const saveSub = async () => {
@@ -76,7 +83,8 @@ const saveSub = async () => {
   if (!editForm.url) { ElMessage.warning('仓库地址必填'); return }
   saving.value = true
   try {
-    const data = { ...editForm }
+    const data: any = { ...editForm }
+    if (!data.alias) data.alias = data.name
     if (editId.value) { data.id = editId.value; await request.put({ url: '/api/subscriptions', data }) }
     else { await request.post({ url: '/api/subscriptions', data }) }
     ElMessage.success('保存成功'); editVisible.value = false; loadData()

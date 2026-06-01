@@ -5,10 +5,10 @@
         <div class="flex items-center gap-4">
           <span>对比工具</span>
           <ElSelect v-model="sampleFile" placeholder="选择示例文件" style="width:200px" @change="loadSample">
-            <ElOption v-for="s in samples" :key="s" :label="s" :value="s" />
+            <ElOption v-for="s in samples" :key="s.value || s" :label="s.title || s" :value="s.value || s" />
           </ElSelect>
           <ElSelect v-model="currentFile" placeholder="选择当前文件" style="width:200px" @change="loadCurrent">
-            <ElOption v-for="f in files" :key="f" :label="f" :value="f" />
+            <ElOption v-for="f in files" :key="f.value || f" :label="f.title || f" :value="f.value || f" />
           </ElSelect>
           <ElButton @click="refresh">刷新</ElButton>
         </div>

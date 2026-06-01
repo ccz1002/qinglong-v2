@@ -6,7 +6,7 @@
           <span>配置文件</span>
           <div class="flex gap-2">
             <ElSelect v-model="currentFile" placeholder="选择配置文件" style="width:300px" filterable>
-              <ElOption v-for="f in files" :key="f" :label="f" :value="f" />
+              <ElOption v-for="f in files" :key="f.value || f" :label="f.title || f" :value="(f.value || f) as string" />
             </ElSelect>
             <ElButton type="primary" @click="handleSave" :loading="saving" :disabled="!currentFile">保存 (Ctrl+S)</ElButton>
             <ElButton @click="loadFiles">刷新</ElButton>
@@ -47,7 +47,7 @@ const handleSave = async () => {
   if (!currentFile.value) return
   saving.value = true
   try {
-    await qlConfigApi.save({ path: currentFile.value, content: content.value })
+    await qlConfigApi.save({ name: currentFile.value, content: content.value })
     ElMessage.success('保存成功')
   } catch (e: any) { ElMessage.error(e?.message || '保存失败') }
   finally { saving.value = false }

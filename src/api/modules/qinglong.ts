@@ -78,8 +78,8 @@ export const qlConfigApi = {
 /** 日志 API */
 export const qlLogApi = {
   list() { return request.get<any>({ url: '/api/logs' }) },
-  detail(path: string) { return request.get<any>({ url: '/api/logs/detail', params: { path } }) },
-  remove(path: string) { return request.del({ url: '/api/logs', data: { path } }) },
+  detail(file: string, path: string) { return request.get<any>({ url: '/api/logs/detail', params: { file, path } }) },
+  remove(file: string, path: string) { return request.del({ url: '/api/logs', data: { filename: file, path } }) },
 }
 
 /** 脚本 API */
