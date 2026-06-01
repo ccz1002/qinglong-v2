@@ -1,0 +1,14 @@
+# 青龙面板 + 新前端 一键部署
+# docker-compose up -d
+# 访问 http://localhost:5700
+
+version: '3.8'
+services:
+  qinglong:
+    build: .
+    container_name: qinglong
+    restart: unless-stopped
+    volumes:
+      - ./data:/ql/data
+    ports:
+      - "5700:5700"
