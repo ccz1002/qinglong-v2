@@ -114,19 +114,28 @@ const saveToLocal = (data: any[]) => {
   try { localStorage.setItem(LS_KEY, JSON.stringify(data)) } catch { /* quota exceeded */ }
 }
 
-// ── 获取菜单 ──
+// ── 获取菜单 (本地优先，API静默同步) ──
 const getMenuList = async () => {
-  loading.value = true
-  try {
-    treeData.value = await fetchGetMenuList()
-    apiOnline.value = true
-    saveToLocal(treeData.value)
-  } catch {
+  // 第一步：立即从 localStorage 加载，无需等待网络
+  const local = loadFromLocal()
+  if (local) {
+    treeData.value = local
     apiOnline.value = false
-    const local = loadFromLocal()
-    treeData.value = local || defaultMenus()
-  } finally {
-    loading.value = false
+  } else {
+    treeData.value = defaultMenus()
+  }
+
+  // 第二步：静默尝试 API 同步（不显示 loading，不显示错误）
+  try {
+    const apiData = await fetchGetMenuList()
+    if (apiData && apiData.length > 0) {
+      treeData.value = apiData
+      apiOnline.value = true
+      saveToLocal(apiData)
+    }
+  } catch {
+    // API 不可用，使用本地数据，完全不报错
+    apiOnline.value = false
   }
 }
 

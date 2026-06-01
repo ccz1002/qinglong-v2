@@ -32,3 +32,5 @@ declare module 'qrcode.vue' {
 
 // 全局变量声明
 declare const __APP_VERSION__: string // 版本号
+declare const __GIT_HASH__: string // Git提交哈希
+declare const __BUILD_TIME__: string // 构建时间

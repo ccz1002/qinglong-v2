@@ -142,11 +142,33 @@
           <ElFormItem><ElButton type="primary" @click="saveOtherConfig" :loading="otherSaving">保存设置</ElButton></ElFormItem>
         </ElForm>
 
+        <ElDivider>版本信息</ElDivider>
+        <div class="version-info mb-4">
+          <ElDescriptions :column="1" border size="small">
+            <ElDescriptionsItem label="当前版本">{{ version.fullVersion }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="构建时间">{{ version.buildTime.substring(0, 19).replace('T', ' ') }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="最新版本">
+              <span v-if="latestHash && latestHash !== version.gitHash" class="text-warning">{{ latestHash }} (有新版本!)</span>
+              <span v-else-if="latestHash" class="text-success">已是最新</span>
+              <span v-else>检测中...</span>
+            </ElDescriptionsItem>
+          </ElDescriptions>
+        </div>
+
+        <ElDivider>在线更新</ElDivider>
+        <div class="flex gap-2 items-center">
+          <ElButton type="primary" @click="onlineUpdate" :loading="updating">
+            <ArtSvgIcon icon="ri:rocket-2-line" class="mr-1" />全量在线更新
+          </ElButton>
+          <ElButton @click="checkVersion" :loading="checking">
+            <ArtSvgIcon icon="ri:search-eye-line" class="mr-1" />检查新版本
+          </ElButton>
+          <span class="text-xs text-g-400">更新将替换所有代码，数据库保留不动</span>
+        </div>
+
         <ElDivider>数据备份与恢复</ElDivider>
         <div class="flex gap-2">
           <ElButton @click="exportData" :loading="exporting">导出数据备份</ElButton>
-          <ElButton @click="checkUpdate" :loading="checking">检查更新</ElButton>
-          <ElButton type="warning" @click="doUpdate" :loading="updating">更新系统</ElButton>
         </div>
       </ElTabPane>
     </ElTabs>
@@ -157,12 +179,61 @@
 import { useRoute } from 'vue-router'
 import request from '@/utils/http'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { getVersion, checkLatestVersion } from '@/utils/sys/version'
 
 defineOptions({ name: 'QlSetting' })
 
 const route = useRoute()
 const activeTab = ref((route.query.tab as string) || 'security')
 watch(() => route.query.tab, (tab) => { if (tab) activeTab.value = tab as string })
+
+// ==================== 版本 & 更新 ====================
+const version = reactive(getVersion())
+const latestHash = ref('')
+const checking = ref(false)
+const updating = ref(false)
+
+const checkVersion = async () => {
+  checking.value = true
+  try {
+    const result = await checkLatestVersion()
+    latestHash.value = result.latestHash
+    if (result.hasUpdate) {
+      ElMessage.success(`发现新版本: ${result.latestHash}`)
+    } else {
+      ElMessage.success('当前已是最新版本')
+    }
+  } catch { ElMessage.error('版本检测失败') }
+  finally { checking.value = false }
+}
+
+const onlineUpdate = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '全量在线更新将替换前端和后端所有代码，保留数据库。确定继续？',
+      '在线更新',
+      { type: 'warning', confirmButtonText: '确定更新' }
+    )
+  } catch { return }
+  updating.value = true
+  try {
+    // 尝试后端更新端点
+    await request.put({ url: '/api/system/update' })
+    ElMessage.success('更新已触发，面板即将重启')
+  } catch {
+    // 后端端点不可用，尝试通过 /api/update/system
+    try {
+      await request.put({ url: '/api/update/system' })
+      ElMessage.success('更新已触发，面板即将重启')
+    } catch {
+      ElMessage.info('自动更新不可用（需Docker部署），请手动执行: bash <(curl -fsSL https://gitee.com/ncuon/qinglong-v2/raw/main/ql.sh) 选2')
+    }
+  }
+  finally { updating.value = false }
+}
+
+// 挂载时自动检测版本
+onMounted(() => { checkLatestVersion().then(r => { latestHash.value = r.latestHash }) })
 
 // ==================== 安全设置 ====================
 const secFormRef = ref()

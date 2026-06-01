@@ -21,7 +21,9 @@ export default ({ mode }: { mode: string }) => {
 
   return defineConfig({
     define: {
-      __APP_VERSION__: JSON.stringify(VITE_VERSION)
+      __APP_VERSION__: JSON.stringify(VITE_VERSION),
+      __GIT_HASH__: JSON.stringify(process.env.GITHUB_SHA?.substring(0, 7) || 'dev'),
+      __BUILD_TIME__: JSON.stringify(new Date().toISOString())
     },
     base: VITE_BASE_URL,
     server: {
