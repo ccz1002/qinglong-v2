@@ -1,133 +1,211 @@
 #!/usr/bin/env bash
 # ============================================
-# 青龙面板 v2 一键部署脚本 (本地构建 + 推送服务器)
-# 用法: bash deploy-local.sh [服务器IP] [服务器用户]
-# 示例: bash deploy-local.sh 106.53.61.242 root
+# 青龙面板 v2 一键部署脚本
+#
+# 用法:
+#   bash deploy.sh install   [服务器IP]    # 全量安装（首次部署）
+#   bash deploy.sh update    [服务器IP]    # 全量更新（保留数据库）
+#   bash deploy.sh uninstall [服务器IP]    # 全量卸载
+#
+# 示例:
+#   bash deploy.sh install 106.53.61.242
+#   bash deploy.sh update  106.53.61.242
+#   bash deploy.sh uninstall 106.53.61.242
 # ============================================
 set -e
 
-# ── 配置 ──────────────────────────────────
-SERVER_IP="${1:-106.53.61.242}"
-SERVER_USER="${2:-root}"
-SERVER_PORT="${3:-5700}"
-QL_DIR="${QL_DIR:-/ql}"
+# ── 参数 ──────────────────────────────────
+MODE="${1:-update}"
+SERVER_IP="${2:-106.53.61.242}"
+SERVER_USER="${3:-root}"
+SERVER_PORT="5700"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-QL_BACKEND="${SCRIPT_DIR}/../qinglong"
+QL_BACKEND="$(dirname "$SCRIPT_DIR")/qinglong"
+QL_DIR="/ql"
 
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-NC='\033[0m'
-
+GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; NC='\033[0m'
 log()  { echo -e "${GREEN}[INFO]${NC}  $1"; }
 warn() { echo -e "${YELLOW}[WARN]${NC}  $1"; }
 err()  { echo -e "${RED}[ERROR]${NC} $1"; exit 1; }
 
-echo "============================================"
-echo "  青龙面板 v2 一键部署"
-echo "  目标服务器: ${SERVER_USER}@${SERVER_IP}"
-echo "============================================"
-echo ""
+# ── 校验 ──────────────────────────────────
+if [ "$MODE" != "install" ] && [ "$MODE" != "update" ] && [ "$MODE" != "uninstall" ]; then
+  echo "用法: bash deploy.sh {install|update|uninstall} [服务器IP]"
+  echo "  install   — 全量安装（首次部署）"
+  echo "  update    — 全量更新（保留数据库）"
+  echo "  uninstall — 全量卸载"
+  exit 1
+fi
 
-# ── 1. 构建前端 ───────────────────────────
+# ── 卸载 ──────────────────────────────────
+if [ "$MODE" = "uninstall" ]; then
+  echo "⚠  即将全量卸载青龙面板，所有数据将被删除！"
+  read -p "确认卸载？输入 yes 继续: " CONFIRM
+  [ "$CONFIRM" != "yes" ] && err "已取消"
+
+  ssh "${SERVER_USER}@${SERVER_IP}" "
+    echo '[INFO] 停止服务...'
+    pm2 delete qinglong 2>/dev/null || true
+    docker stop qinglong 2>/dev/null || true
+    docker rm qinglong 2>/dev/null || true
+    echo '[INFO] 删除所有文件...'
+    rm -rf $QL_DIR
+    echo '[INFO] 卸载完成'
+  "
+  log "青龙面板已从 ${SERVER_IP} 完全卸载"
+  exit 0
+fi
+
+# ── 本地构建 ──────────────────────────────
+log "============================================"
+log "  青龙面板 v2 — 全量${MODE}"
+log "  目标: ${SERVER_USER}@${SERVER_IP}"
+log "============================================"
+
 log "1/4 构建前端..."
 cd "$SCRIPT_DIR"
 pnpm install --no-frozen-lockfile 2>/dev/null || pnpm install
 pnpm exec vite build
-log "前端构建完成 → dist/"
+log "前端构建完成"
 
-# ── 2. 构建后端 ───────────────────────────
 log "2/4 构建后端..."
 if [ -d "$QL_BACKEND" ]; then
   cd "$QL_BACKEND"
   pnpm install --no-frozen-lockfile 2>/dev/null || npm install
   pnpm run build:back 2>/dev/null || npm run build:back
-  log "后端构建完成 → static/build/"
+  log "后端构建完成"
 else
-  warn "未找到 qinglong 后端源码 ($QL_BACKEND)，跳过后端构建"
-  warn "后端将使用服务器上已有版本"
+  warn "未找到 qinglong 后端源码 ($QL_BACKEND)"
+  warn "请确保 ../qinglong 目录存在，或手动编译后端"
+  exit 1
 fi
 cd "$SCRIPT_DIR"
 
-# ── 3. 打包并上传 ─────────────────────────
+# ── 打包 ──────────────────────────────────
 log "3/4 打包部署文件..."
 TMPDIR=$(mktemp -d)
-mkdir -p "$TMPDIR/dist"
-
-# 前端
+mkdir -p "$TMPDIR/dist" "$TMPDIR/static"
 cp -r dist/* "$TMPDIR/dist/"
+cp -r "$QL_BACKEND/static/build" "$TMPDIR/static/"
 
-# 后端 (如果有)
-if [ -d "$QL_BACKEND/static/build" ]; then
-  mkdir -p "$TMPDIR/static"
-  cp -r "$QL_BACKEND/static/build" "$TMPDIR/static/"
-fi
-
-# 服务器端部署脚本
+# 生成服务器端部署脚本
 cat > "$TMPDIR/server-deploy.sh" << 'SERVERSCRIPT'
 #!/usr/bin/env bash
 set -e
-QL_DIR="${QL_DIR:-/ql}"
-BACKUP_DIR="${QL_DIR}/.backup_$(date +%Y%m%d_%H%M%S)"
+QL_DIR="/ql"
+MODE="$1"
 DEPLOY_DIR="$(cd "$(dirname "$0")" && pwd)"
+BACKUP_DIR="${QL_DIR}/.backup_$(date +%Y%m%d_%H%M%S)"
 
-echo "[INFO] 备份现有文件到 $BACKUP_DIR ..."
-mkdir -p "$BACKUP_DIR"
-cp -r "$QL_DIR/static/dist" "$BACKUP_DIR/dist" 2>/dev/null || true
-cp -r "$QL_DIR/static/build" "$BACKUP_DIR/build" 2>/dev/null || true
+GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
+log()  { echo -e "${GREEN}[INFO]${NC}  $1"; }
+warn() { echo -e "${YELLOW}[WARN]${NC}  $1"; }
 
-echo "[INFO] 停止青龙面板..."
-pm2 stop qinglong 2>/dev/null || true
-sleep 2
+if [ "$MODE" = "install" ]; then
+  # ========== 全量安装 ==========
+  log "全量安装青龙面板..."
 
-echo "[INFO] 替换前端..."
-rm -rf "$QL_DIR/static/dist"
-cp -r "$DEPLOY_DIR/dist" "$QL_DIR/static/dist"
+  # 创建目录结构
+  mkdir -p "$QL_DIR"/{static,data,log,repo,raw,scripts,config,deps}
 
-if [ -d "$DEPLOY_DIR/static/build" ]; then
-  echo "[INFO] 替换后端..."
+  # 复制所有代码
+  log "安装前端..."
+  cp -r "$DEPLOY_DIR/dist" "$QL_DIR/static/dist"
+
+  log "安装后端..."
+  cp -r "$DEPLOY_DIR/static/build" "$QL_DIR/static/build"
+
+  # 安装依赖
+  if [ -f "$QL_DIR/static/build/package.json" ]; then
+    cd "$QL_DIR"
+    log "安装运行时依赖..."
+    npm install --production 2>/dev/null || true
+  fi
+
+  # 初始化数据库
+  log "初始化数据库..."
+  cd "$QL_DIR"
+  node -e "
+    const { sequelize } = require('./static/build/data/index.js');
+    sequelize.sync().then(() => console.log('DB synced'));
+  " 2>/dev/null || log "数据库将在首次启动时自动初始化"
+
+  log "青龙面板安装完成!"
+
+elif [ "$MODE" = "update" ]; then
+  # ========== 全量更新 ==========
+  log "全量更新青龙面板（保留数据库）..."
+
+  # 备份
+  log "备份现有文件 → $BACKUP_DIR"
+  mkdir -p "$BACKUP_DIR"
+  cp -r "$QL_DIR/static/dist" "$BACKUP_DIR/dist" 2>/dev/null || true
+  cp -r "$QL_DIR/static/build" "$BACKUP_DIR/build" 2>/dev/null || true
+
+  # 停服
+  log "停止服务..."
+  pm2 stop qinglong 2>/dev/null || true
+  sleep 2
+
+  # 替换
+  log "替换前端..."
+  rm -rf "$QL_DIR/static/dist"
+  cp -r "$DEPLOY_DIR/dist" "$QL_DIR/static/dist"
+
+  log "替换后端..."
   rm -rf "$QL_DIR/static/build"
   cp -r "$DEPLOY_DIR/static/build" "$QL_DIR/static/build"
+
+  log "数据库 ($QL_DIR/data) — 保留不动 ✓"
+  log "配置文件 ($QL_DIR/config) — 保留不动 ✓"
+  log "脚本仓库 ($QL_DIR/scripts) — 保留不动 ✓"
+  log "日志目录 ($QL_DIR/log) — 保留不动 ✓"
+
+else
+  echo "Unknown mode: $MODE"; exit 1
 fi
 
-echo "[INFO] 跳过数据库目录 ($QL_DIR/data) — 数据保留不动"
+# 重启
+log "启动服务..."
+cd "$QL_DIR"
+if pm2 list 2>/dev/null | grep -q qinglong; then
+  pm2 restart qinglong
+else
+  pm2 start static/build/app.js --name qinglong
+fi
+pm2 save 2>/dev/null || true
 
-echo "[INFO] 重启青龙面板..."
-pm2 restart qinglong 2>/dev/null || pm2 start "$QL_DIR/static/build/app.js" --name qinglong 2>/dev/null || true
-
+IP=$(hostname -I 2>/dev/null | awk '{print $1}' || echo "localhost")
 echo ""
 echo "============================================"
-echo "  部署完成!"
-echo "  访问地址: http://$(hostname -I | awk '{print $1}'):5700"
-echo "  备份目录: $BACKUP_DIR"
+log "  部署完成!"
+log "  访问: http://${IP}:5700"
+[ "$MODE" = "update" ] && log "  回滚: cp -r $BACKUP_DIR/* $QL_DIR/static/"
 echo "============================================"
 SERVERSCRIPT
 chmod +x "$TMPDIR/server-deploy.sh"
 
-# 打包上传
 ARCHIVE="/tmp/qinglong-deploy-$(date +%Y%m%d-%H%M%S).tar.gz"
 cd "$TMPDIR"
 tar czf "$ARCHIVE" .
-log "上传到服务器 ${SERVER_USER}@${SERVER_IP}..."
+log "打包完成: $ARCHIVE ($(du -h "$ARCHIVE" | cut -f1))"
 
+# ── 上传并执行 ─────────────────────────────
+log "4/4 上传到服务器并执行..."
 scp "$ARCHIVE" "${SERVER_USER}@${SERVER_IP}:/tmp/"
 
-# ── 4. 服务器端解压并执行 ─────────────────
-log "4/4 服务器端部署..."
 ssh "${SERVER_USER}@${SERVER_IP}" "
-  cd /tmp
   DEPLOY_TMP=\$(mktemp -d)
   tar xzf '$ARCHIVE' -C \"\$DEPLOY_TMP\"
   cd \"\$DEPLOY_TMP\"
-  bash server-deploy.sh
+  bash server-deploy.sh '$MODE'
   rm -rf \"\$DEPLOY_TMP\" '$ARCHIVE'
 "
 
-# 清理本地临时文件
+# 清理本地
 rm -rf "$TMPDIR" "$ARCHIVE"
 
-echo ""
 log "============================================"
-log "  部署成功! 打开浏览器访问:"
+log "  全部完成! 打开浏览器访问:"
 log "  http://${SERVER_IP}:${SERVER_PORT}"
 log "============================================"
