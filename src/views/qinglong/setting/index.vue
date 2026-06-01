@@ -454,8 +454,6 @@ const saveDepConfig = async () => {
 const otherForm = reactive({ logRemoveFrequency: 7, cronConcurrency: 5, timezone: 'Asia/Shanghai', globalSshKey: '' })
 const otherSaving = ref(false)
 const exporting = ref(false)
-const checking = ref(false)
-const updating = ref(false)
 const timezones = ['Asia/Shanghai', 'Asia/Tokyo', 'America/New_York', 'America/Los_Angeles', 'Europe/London', 'Europe/Berlin', 'UTC']
 
 const loadOtherConfig = async () => {
@@ -496,25 +494,6 @@ const exportData = async () => {
     ElMessage.warning('数据备份需要 Docker/Linux 环境，当前 Windows 下不可用。可手动复制 data/ 目录备份。')
   }
   finally { exporting.value = false }
-}
-
-const checkUpdate = async () => {
-  checking.value = true
-  try { await request.put({ url: '/api/system/update-check' }); ElMessage.success('检查完成') }
-  catch (e: any) { ElMessage.error(e?.message || '检查失败') }
-  finally { checking.value = false }
-}
-
-const doUpdate = async () => {
-  try {
-    await ElMessageBox.confirm('确定更新系统？更新期间面板可能暂时不可用', '警告', { type: 'warning' })
-    updating.value = true
-    await request.put({ url: '/api/system/update' })
-    ElMessage.success('更新已触发')
-  } catch (e: any) {
-    if (e !== 'cancel') ElMessage.error(e?.message || '更新失败')
-  }
-  finally { updating.value = false }
 }
 
 // 初始化所有数据
