@@ -12,6 +12,7 @@
     "requestCancelled": "请求已取消",
     "networkError": "网络连接异常，请检查网络连接",
     "requestFailed": "请求失败",
+    "badRequest": "请求参数不正确，请检查输入数据",
     "requestConfigError": "请求配置错误"
   },
   "topBar": {

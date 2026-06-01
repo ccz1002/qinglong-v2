@@ -1,9 +1,11 @@
-# 前端 dist + 后端菜单管理 API
+# ============================================
+# 全量部署（已迁移到 Dockerfile.full + CI 自动构建后端）
+# 此文件保留兼容，如需全量构建请使用 Dockerfile.full
+# ============================================
 FROM whyour/qinglong:latest
+
+# 全量替换后端（需先执行: cd ../qinglong && npm run build:back）
+COPY static/build /ql/static/build
+
+# 替换前端
 COPY dist /ql/static/dist
-COPY backend/api/menu.js /ql/static/build/api/menu.js
-COPY backend/api/index.js /ql/static/build/api/index.js
-COPY backend/services/menu.js /ql/static/build/services/menu.js
-COPY backend/data/menu.js /ql/static/build/data/menu.js
-COPY backend/loaders/db.js /ql/static/build/loaders/db.js
-COPY backend/loaders/initData.js /ql/static/build/loaders/initData.js

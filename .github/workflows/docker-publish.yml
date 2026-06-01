@@ -9,10 +9,18 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout qinglong-v2
         uses: actions/checkout@v4
+        with:
+          path: qinglong-v2
 
-      - name: Setup pnpm
+      - name: Checkout qinglong (backend source)
+        uses: actions/checkout@v4
+        with:
+          repository: whyour/qinglong
+          path: qinglong
+
+      - name: Setup pnpm (frontend)
         uses: pnpm/action-setup@v4
         with:
           version: 10
@@ -22,11 +30,28 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install dependencies
+      - name: Install frontend dependencies
+        working-directory: qinglong-v2
         run: pnpm install --no-frozen-lockfile
 
-      - name: Build frontend
+      - name: Build frontend (qinglong-v2)
+        working-directory: qinglong-v2
         run: pnpm exec vite build
+
+      - name: Install backend dependencies
+        working-directory: qinglong
+        run: npm install
+
+      - name: Build backend (qinglong)
+        working-directory: qinglong
+        run: npm run build:back
+
+      - name: Prepare Docker context
+        run: |
+          mkdir -p docker-context/dist
+          mkdir -p docker-context/static
+          cp -r qinglong-v2/dist/* docker-context/dist/
+          cp -r qinglong/static/build docker-context/static/
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -37,7 +62,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: Dockerfile.simple
+          context: docker-context
+          file: qinglong-v2/Dockerfile.full
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/qinglong-v2:latest

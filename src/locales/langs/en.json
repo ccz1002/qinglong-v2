@@ -12,6 +12,7 @@
     "requestCancelled": "Request cancelled",
     "networkError": "Network connection error, please check your connection",
     "requestFailed": "Request failed",
+    "badRequest": "Invalid request parameters, please check your input",
     "requestConfigError": "Request configuration error"
   },
   "topBar": {

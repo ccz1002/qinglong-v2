@@ -1,0 +1,12 @@
+# ============================================
+# 全量部署 Dockerfile
+# 替换所有代码（前端dist + 后端build），数据库保持不动（/ql/data 走 Volume）
+# ============================================
+
+FROM whyour/qinglong:latest
+
+# 1. 全量替换后端编译代码（API、Services、Loaders 等所有模块）
+COPY static/build /ql/static/build
+
+# 2. 替换前端静态资源
+COPY dist /ql/static/dist
