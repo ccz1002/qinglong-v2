@@ -19,5 +19,5 @@ export function initRouter(app: App<Element>): void {
   app.use(router)
 }
 
-// 主页路径，青龙面板默认进入定时任务页
-export const HOME_PAGE_PATH = '/crontab'
+// 主页路径，青龙面板默认进入仪表盘
+export const HOME_PAGE_PATH = '/dashboard'

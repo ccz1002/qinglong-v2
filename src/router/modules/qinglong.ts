@@ -3,6 +3,10 @@ import { AppRouteRecord } from '@/types/router'
 /** 青龙面板侧边栏菜单 - 与本机数据库完全一致 */
 export const qinglongRoutes: AppRouteRecord[] = [
   {
+    name: 'Dashboard', path: '/dashboard', component: '/qinglong/dashboard/index',
+    meta: { title: '仪表盘', icon: 'ri:dashboard-line', keepAlive: false, fixedTab: true }
+  },
+  {
     name: 'Crontab', path: '/crontab', component: '/qinglong/crontab/index',
     meta: { title: '定时任务', icon: 'ri:timer-line', keepAlive: true }
   },

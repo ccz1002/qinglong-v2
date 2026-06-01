@@ -154,12 +154,15 @@
 </template>
 
 <script setup lang="ts">
+import { useRoute } from 'vue-router'
 import request from '@/utils/http'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 defineOptions({ name: 'QlSetting' })
 
-const activeTab = ref('security')
+const route = useRoute()
+const activeTab = ref((route.query.tab as string) || 'security')
+watch(() => route.query.tab, (tab) => { if (tab) activeTab.value = tab as string })
 
 // ==================== 安全设置 ====================
 const secFormRef = ref()
