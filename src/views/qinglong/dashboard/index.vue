@@ -1,92 +1,134 @@
 <template>
   <div class="ql-dashboard">
-    <!-- 顶部统计卡片 -->
-    <ElRow :gutter="16" class="stats-row">
-      <ElCol :xs="24" :sm="12" :md="6" v-for="card in statCards" :key="card.key">
-        <ElCard shadow="hover" class="stat-card">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="stat-label">{{ card.label }}</p>
-              <p class="stat-value" :style="{ color: card.color }">{{ card.value }}</p>
-            </div>
-            <div class="stat-icon" :style="{ background: card.bg }">
-              <ArtSvgIcon :icon="card.icon" class="text-2xl" :style="{ color: card.color }" />
-            </div>
+    <!-- 统计卡片 -->
+    <ElRow :gutter="16">
+      <ElCol v-for="card in statCards" :key="card.key" :xs="12" :sm="12" :md="6">
+        <div class="art-card stat-card flex items-center justify-between px-5 py-4 mb-4 transition-all duration-200 hover:-translate-y-0.5">
+          <div>
+            <p class="m-0 text-sm text-g-500">{{ card.label }}</p>
+            <ArtCountTo class="text-[26px] font-semibold mt-1" :target="card.value" :duration="1000" />
           </div>
-        </ElCard>
+          <div class="size-11 flex-cc rounded-lg text-xl text-white" :style="{ background: card.color }">
+            <ArtSvgIcon :icon="card.icon" />
+          </div>
+        </div>
       </ElCol>
     </ElRow>
 
-    <ElRow :gutter="16" class="mt-4">
+    <ElRow :gutter="16">
       <!-- 系统信息 -->
       <ElCol :xs="24" :lg="12">
-        <ElCard header="系统信息" shadow="hover">
-          <template #header>
-            <div class="flex items-center justify-between">
-              <span>系统信息</span>
-              <ElButton size="small" @click="loadSystemInfo" :loading="sysLoading">刷新</ElButton>
-            </div>
-          </template>
-          <ElDescriptions :column="2" border size="small">
-            <ElDescriptionsItem label="青龙版本">{{ sysInfo.version || '-' }}</ElDescriptionsItem>
-            <ElDescriptionsItem label="运行环境">{{ sysInfo.os || '-' }}</ElDescriptionsItem>
-            <ElDescriptionsItem label="Node.js">{{ sysInfo.nodeVersion || '-' }}</ElDescriptionsItem>
-            <ElDescriptionsItem label="CPU架构">{{ sysInfo.arch || '-' }}</ElDescriptionsItem>
-            <ElDescriptionsItem label="运行时长">{{ sysInfo.uptime || '-' }}</ElDescriptionsItem>
-            <ElDescriptionsItem label="PID">{{ sysInfo.pid || '-' }}</ElDescriptionsItem>
-            <ElDescriptionsItem label="数据库">{{ sysInfo.dbType || 'SQLite' }}</ElDescriptionsItem>
-            <ElDescriptionsItem label="调度器">{{ sysInfo.scheduler || '-' }}</ElDescriptionsItem>
-          </ElDescriptions>
-        </ElCard>
+        <div class="art-card mb-4">
+          <div class="flex items-center justify-between px-5 py-3 border-b border-g-200">
+            <span class="font-medium">系统信息</span>
+            <ElButton size="small" text @click="loadSystemInfo" :loading="sysLoading">
+              <ArtSvgIcon icon="ri:refresh-line" class="text-base" />
+            </ElButton>
+          </div>
+          <div class="p-4">
+            <ElDescriptions :column="2" border size="small">
+              <ElDescriptionsItem label="青龙版本">{{ sysInfo.version || '-' }}</ElDescriptionsItem>
+              <ElDescriptionsItem label="运行环境">{{ sysInfo.os || '-' }}</ElDescriptionsItem>
+              <ElDescriptionsItem label="Node.js">{{ sysInfo.nodeVersion || '-' }}</ElDescriptionsItem>
+              <ElDescriptionsItem label="CPU架构">{{ sysInfo.arch || '-' }}</ElDescriptionsItem>
+              <ElDescriptionsItem label="运行时长">{{ sysInfo.uptime || '-' }}</ElDescriptionsItem>
+              <ElDescriptionsItem label="PID">{{ sysInfo.pid || '-' }}</ElDescriptionsItem>
+              <ElDescriptionsItem label="数据库">{{ sysInfo.dbType || 'SQLite' }}</ElDescriptionsItem>
+              <ElDescriptionsItem label="调度器">{{ sysInfo.scheduler || '-' }}</ElDescriptionsItem>
+            </ElDescriptions>
+          </div>
+        </div>
       </ElCol>
 
-      <!-- 资源使用 -->
+      <!-- 资源 + 快捷入口 -->
       <ElCol :xs="24" :lg="12">
-        <ElCard header="资源使用" shadow="hover">
-          <div class="resource-item" v-for="res in resources" :key="res.key">
-            <div class="flex items-center justify-between mb-1">
-              <span class="text-sm">{{ res.label }}</span>
-              <span class="text-sm font-medium" :style="{ color: res.used > 80 ? '#f56c6c' : '#67c23a' }">{{ res.display }}</span>
-            </div>
-            <ElProgress :percentage="Math.min(res.used, 100)" :color="res.used > 80 ? '#f56c6c' : '#409eff'" :stroke-width="10" />
+        <div class="art-card mb-4">
+          <div class="px-5 py-3 border-b border-g-200">
+            <span class="font-medium">资源使用</span>
           </div>
-        </ElCard>
+          <div class="p-4">
+            <div v-for="res in resources" :key="res.key" class="mb-4 last:mb-0">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-sm text-g-600">{{ res.label }}</span>
+                <span class="text-sm font-medium" :class="res.used > 80 ? 'text-danger' : 'text-success'">
+                  {{ res.display }}
+                </span>
+              </div>
+              <ElProgress
+                :percentage="Math.min(res.used, 100)"
+                :color="res.used > 80 ? '#f56c6c' : res.used > 60 ? '#e6a23c' : '#409eff'"
+                :stroke-width="8"
+                :show-text="false"
+              />
+            </div>
+          </div>
+        </div>
 
-        <!-- 快捷入口 -->
-        <ElCard header="快捷入口" shadow="hover" class="mt-4">
-          <div class="quick-links">
-            <ElButton v-for="link in quickLinks" :key="link.path" @click="goPage(link.path)" :icon="link.icon" class="mr-3 mb-3">
+        <div class="art-card p-4">
+          <p class="m-0 mb-3 text-sm font-medium text-g-600">快捷入口</p>
+          <div class="flex flex-wrap gap-2">
+            <ElButton
+              v-for="link in quickLinks"
+              :key="link.path"
+              size="small"
+              @click="goPage(link.path)"
+            >
+              <ArtSvgIcon :icon="link.icon" class="mr-1" />
               {{ link.label }}
             </ElButton>
           </div>
-        </ElCard>
+        </div>
       </ElCol>
     </ElRow>
 
-    <ElRow :gutter="16" class="mt-4">
-      <!-- 最近执行 -->
-      <ElCol :span="24">
-        <ElCard header="最近任务执行" shadow="hover">
-          <ElTable :data="recentTasks" v-loading="taskLoading" stripe size="small" empty-text="暂无执行记录">
-            <ElTableColumn label="时间" width="160">
-              <template #default="{ row }">{{ row.timestamp ? new Date(row.timestamp).toLocaleString() : '-' }}</template>
-            </ElTableColumn>
-            <ElTableColumn prop="taskName" label="任务名称" min-width="160" />
-            <ElTableColumn prop="command" label="命令" min-width="120" show-overflow-tooltip />
-            <ElTableColumn label="状态" width="80">
-              <template #default="{ row }">
-                <ElTag :type="row.status === 0 ? 'success' : row.status === 1 ? 'danger' : 'warning'" size="small">
-                  {{ ['成功','失败','运行中'][row.status] || '-' }}
-                </ElTag>
-              </template>
-            </ElTableColumn>
-            <ElTableColumn label="耗时" width="100">
-              <template #default="{ row }">{{ row.duration ? row.duration + 's' : '-' }}</template>
-            </ElTableColumn>
-          </ElTable>
-        </ElCard>
-      </ElCol>
-    </ElRow>
+    <!-- 最近执行 -->
+    <div class="art-card mt-4">
+      <div class="flex items-center justify-between px-5 py-3 border-b border-g-200">
+        <span class="font-medium">最近任务执行</span>
+        <ElButton size="small" text @click="loadRecentTasks" :loading="taskLoading">
+          <ArtSvgIcon icon="ri:refresh-line" class="text-base" />
+        </ElButton>
+      </div>
+      <ElTable
+        :data="recentTasks"
+        v-loading="taskLoading"
+        size="small"
+        empty-text="暂无执行记录"
+        class="dashboard-table"
+      >
+        <ElTableColumn label="时间" width="170">
+          <template #default="{ row }">
+            <span class="text-sm text-g-600">{{ row.timestamp ? new Date(row.timestamp).toLocaleString() : '-' }}</span>
+          </template>
+        </ElTableColumn>
+        <ElTableColumn label="任务名称" min-width="160">
+          <template #default="{ row }">
+            <span class="text-sm">{{ row.taskName }}</span>
+          </template>
+        </ElTableColumn>
+        <ElTableColumn label="命令" min-width="140" show-overflow-tooltip>
+          <template #default="{ row }">
+            <code class="text-xs text-g-500">{{ row.command }}</code>
+          </template>
+        </ElTableColumn>
+        <ElTableColumn label="状态" width="80" align="center">
+          <template #default="{ row }">
+            <ElTag
+              :type="row.status === 0 ? 'success' : row.status === 1 ? 'danger' : 'warning'"
+              size="small"
+              effect="plain"
+            >
+              {{ ['成功','失败','运行中'][row.status] || '-' }}
+            </ElTag>
+          </template>
+        </ElTableColumn>
+        <ElTableColumn label="耗时" width="80" align="right">
+          <template #default="{ row }">
+            <span class="text-sm text-g-500">{{ row.duration ? row.duration + 's' : '-' }}</span>
+          </template>
+        </ElTableColumn>
+      </ElTable>
+    </div>
   </div>
 </template>
 
@@ -101,10 +143,10 @@ const sysLoading = ref(false)
 
 // ── 统计卡片 ──
 const statCards = reactive([
-  { key: 'tasks', label: '定时任务', value: 0, icon: 'ri:timer-line', color: '#409eff', bg: '#ecf5ff' },
-  { key: 'running', label: '运行中', value: 0, icon: 'ri:play-circle-line', color: '#67c23a', bg: '#f0f9eb' },
-  { key: 'scripts', label: '脚本文件', value: 0, icon: 'ri:code-box-line', color: '#e6a23c', bg: '#fdf6ec' },
-  { key: 'envs', label: '环境变量', value: 0, icon: 'ri:settings-3-line', color: '#909399', bg: '#f4f4f5' },
+  { key: 'tasks', label: '定时任务', value: 0, icon: 'ri:timer-line', color: '#409eff' },
+  { key: 'running', label: '运行中', value: 0, icon: 'ri:play-circle-line', color: '#67c23a' },
+  { key: 'scripts', label: '脚本文件', value: 0, icon: 'ri:code-box-line', color: '#e6a23c' },
+  { key: 'envs', label: '环境变量', value: 0, icon: 'ri:settings-3-line', color: '#8b5cf6' },
 ])
 
 // ── 系统信息 ──
@@ -114,7 +156,6 @@ const loadSystemInfo = async () => {
   try {
     const res = await request.get<any>({ url: '/api/system' })
     Object.assign(sysInfo, res || {})
-    // 格式化运行时长
     if (sysInfo.uptime && typeof sysInfo.uptime === 'number') {
       const d = Math.floor(sysInfo.uptime / 86400)
       const h = Math.floor((sysInfo.uptime % 86400) / 3600)
@@ -127,12 +168,12 @@ const loadSystemInfo = async () => {
 
 // ── 资源使用 ──
 const resources = reactive([
-  { key: 'cpu', label: 'CPU', used: 0, display: '0%' },
-  { key: 'memory', label: '内存', used: 0, display: '0%' },
-  { key: 'disk', label: '磁盘', used: 0, display: '0%' },
+  { key: 'cpu', label: 'CPU 使用率', used: 0, display: '0%' },
+  { key: 'memory', label: '内存使用率', used: 0, display: '0%' },
+  { key: 'disk', label: '磁盘使用率', used: 0, display: '0%' },
 ])
 
-// ── 统计加载 ──
+// ── 统计数据 ──
 const loadStats = async () => {
   try {
     const [cronsRes, scriptsRes, envsRes] = await Promise.all([
@@ -149,7 +190,6 @@ const loadStats = async () => {
     statCards[2].value = Array.isArray(scripts) ? scripts.length : 0
     statCards[3].value = envs.length
 
-    // 资源使用 (简单估算)
     if (sysInfo.memory) {
       const mem = sysInfo.memory as any
       if (mem.total && mem.used) {
@@ -208,56 +248,11 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.ql-dashboard {
-  padding: 0;
+.stat-card .art-svg-icon {
+  font-size: 22px;
 }
 
-.stats-row {
-  margin-bottom: 0;
-}
-
-.stat-card {
-  border-radius: 8px;
-  transition: transform 0.2s;
-}
-.stat-card:hover {
-  transform: translateY(-2px);
-}
-
-.stat-label {
-  margin: 0 0 8px 0;
-  font-size: 13px;
-  color: #909399;
-}
-
-.stat-value {
-  margin: 0;
-  font-size: 28px;
-  font-weight: 700;
-}
-
-.stat-icon {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;
-}
-
-.resource-item {
-  margin-bottom: 16px;
-}
-.resource-item:last-child {
-  margin-bottom: 0;
-}
-
-.quick-links {
-  display: flex;
-  flex-wrap: wrap;
-}
-
-:deep(.el-descriptions__label) {
-  font-weight: 500;
+.dashboard-table :deep(.el-table__row:last-child td) {
+  border-bottom: none;
 }
 </style>
