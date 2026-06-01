@@ -68,25 +68,28 @@ pnpm install --no-frozen-lockfile 2>/dev/null || pnpm install
 pnpm exec vite build
 log "前端构建完成"
 
-log "2/4 构建后端..."
-if [ -d "$QL_BACKEND" ]; then
+log "2/4 使用预编译后端 (backend-build/)..."
+if [ ! -d "$SCRIPT_DIR/backend-build" ]; then
+  warn "未找到 backend-build/ 目录，请在 ../qinglong 中执行 pnpm run build:back 然后复制到 backend-build/"
+  warn "现在自动构建..."
   cd "$QL_BACKEND"
   pnpm install --no-frozen-lockfile 2>/dev/null || npm install
   pnpm run build:back 2>/dev/null || npm run build:back
-  log "后端构建完成"
-else
-  warn "未找到 qinglong 后端源码 ($QL_BACKEND)"
-  warn "请确保 ../qinglong 目录存在，或手动编译后端"
-  exit 1
+  cd "$SCRIPT_DIR"
+  cp -r "$QL_BACKEND/static/build" backend-build
+  cp backend/api/*.js backend-build/api/ 2>/dev/null || true
+  cp backend/services/*.js backend-build/services/ 2>/dev/null || true
+  cp backend/data/*.js backend-build/data/ 2>/dev/null || true
+  cp backend/loaders/*.js backend-build/loaders/ 2>/dev/null || true
 fi
-cd "$SCRIPT_DIR"
+log "后端就绪"
 
 # ── 打包 ──────────────────────────────────
 log "3/4 打包部署文件..."
 TMPDIR=$(mktemp -d)
 mkdir -p "$TMPDIR/dist" "$TMPDIR/static"
 cp -r dist/* "$TMPDIR/dist/"
-cp -r "$QL_BACKEND/static/build" "$TMPDIR/static/"
+cp -r "$SCRIPT_DIR/backend-build" "$TMPDIR/static/build"
 
 # 生成服务器端部署脚本
 cat > "$TMPDIR/server-deploy.sh" << 'SERVERSCRIPT'

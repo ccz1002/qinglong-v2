@@ -3,23 +3,14 @@ name: Build and Push Docker Image
 on:
   push:
     branches: [main, master]
-  workflow_dispatch:  # 允许手动触发
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  workflow_dispatch:
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout qinglong-v2
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          path: qinglong-v2
-
-      - name: Checkout qinglong (backend source from Gitee)
-        run: |
-          git clone --depth 1 https://gitee.com/whyour/qinglong.git qinglong
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -31,28 +22,16 @@ jobs:
         with:
           version: 10
 
-      - name: Install frontend dependencies
-        working-directory: qinglong-v2
-        run: pnpm install --no-frozen-lockfile
+      - name: Install & Build Frontend
+        run: |
+          pnpm install --no-frozen-lockfile
+          pnpm exec vite build
 
-      - name: Build frontend (qinglong-v2)
-        working-directory: qinglong-v2
-        run: pnpm exec vite build
-
-      - name: Install backend dependencies
-        working-directory: qinglong
-        run: pnpm install --no-frozen-lockfile
-
-      - name: Build backend (qinglong)
-        working-directory: qinglong
-        run: pnpm run build:back
-
-      - name: Prepare Docker context
+      - name: Prepare Docker Context
         run: |
           mkdir -p docker-context/dist
-          mkdir -p docker-context/static
-          cp -r qinglong-v2/dist/* docker-context/dist/
-          cp -r qinglong/static/build docker-context/static/
+          cp -r dist/* docker-context/dist/
+          cp -r backend-build docker-context/
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -60,10 +39,10 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Docker image
+      - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
           context: docker-context
-          file: qinglong-v2/Dockerfile.full
+          file: Dockerfile.full
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/qinglong-v2:latest
