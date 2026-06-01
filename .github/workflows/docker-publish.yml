@@ -17,11 +17,9 @@ jobs:
         with:
           path: qinglong-v2
 
-      - name: Checkout qinglong (backend source)
-        uses: actions/checkout@v4
-        with:
-          repository: whyour/qinglong
-          path: qinglong
+      - name: Checkout qinglong (backend source from Gitee)
+        run: |
+          git clone --depth 1 https://gitee.com/whyour/qinglong.git qinglong
 
       - name: Setup Node
         uses: actions/setup-node@v4
