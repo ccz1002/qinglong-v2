@@ -1,37 +1,29 @@
-<!-- 菜单管理 - 树形列表 + 按钮排序 -->
+<!-- 菜单管理 -->
 <template>
   <div class="menu-page">
-    <ElCard>
-      <template #header>
-        <div class="flex items-center justify-between">
-          <span>菜单管理</span>
-          <div class="flex gap-2">
-            <ElButton type="primary" @click="handleAdd(null)">+ 添加顶级菜单</ElButton>
-            <ElButton @click="getMenuList" :loading="loading">刷新</ElButton>
-          </div>
+    <div class="art-card">
+      <div class="flex items-center justify-between px-5 py-3 border-b border-g-200">
+        <span class="font-medium"><ArtSvgIcon icon="ri:menu-line" class="mr-2" />菜单管理</span>
+        <div class="flex gap-2">
+          <ElButton type="primary" size="small" @click="handleAdd(null)"><ArtSvgIcon icon="ri:add-line" class="mr-1" />顶级菜单</ElButton>
+          <ElButton size="small" @click="getMenuList" :loading="loading"><ArtSvgIcon icon="ri:refresh-line" class="mr-1" />刷新</ElButton>
         </div>
-      </template>
+      </div>
 
-      <!-- 树形菜单列表 -->
       <div v-if="flatList.length" class="menu-list">
-        <div
-          v-for="(menu, index) in flatList"
-          :key="menu.id"
-          class="menu-row"
-          :style="{ paddingLeft: menu._level * 28 + 12 + 'px' }"
-        >
+        <div v-for="(menu, index) in flatList" :key="menu.id" class="menu-row" :style="{ paddingLeft: menu._level * 28 + 12 + 'px' }">
           <span class="menu-sort-btns">
             <ElButton size="small" text :disabled="index === 0" @click="moveUp(index)" title="上移">↑</ElButton>
             <ElButton size="small" text :disabled="index === flatList.length - 1" @click="moveDown(index)" title="下移">↓</ElButton>
             <ElButton size="small" text :disabled="menu._level === 0" @click="outdent(index)" title="升级">←</ElButton>
-            <ElButton size="small" text :disabled="index === 0 || flatList[index-1]._level < menu._level" @click="indent(index)" title="缩进（变成上一个菜单的子菜单）">→</ElButton>
+            <ElButton size="small" text :disabled="index === 0 || flatList[index - 1]._level < menu._level" @click="indent(index)" title="缩进">→</ElButton>
           </span>
-          <span class="menu-icon"><i :class="menu.meta?.icon || 'ri:file-line'" style="font-size:16px"></i></span>
-          <span class="menu-title">{{ formatMenuTitle(menu.meta?.title) || menu.name }}</span>
+          <span class="menu-icon"><ArtSvgIcon :icon="menu.meta?.icon || 'ri:file-line'" /></span>
+          <span class="menu-title">{{ menu.meta?.title || menu.name }}</span>
           <span class="menu-path">{{ menu.path }}</span>
-          <ElTag v-if="menu.children?.length" size="small" type="info">目录({{ menu.children.length }})</ElTag>
-          <ElTag v-else-if="menu.component" size="small" type="primary">页面</ElTag>
-          <ElTag v-else size="small" type="warning">空目录</ElTag>
+          <ElTag v-if="menu.children?.length" size="small" effect="plain" type="info">目录({{ menu.children.length }})</ElTag>
+          <ElTag v-else-if="menu.component" size="small" effect="plain" type="primary">页面</ElTag>
+          <ElTag v-else size="small" effect="plain" type="warning">空目录</ElTag>
           <div class="menu-actions">
             <ElButton size="small" text type="primary" @click="handleAdd(menu)">+ 子项</ElButton>
             <ElButton size="small" text @click="handleEdit(menu)">编辑</ElButton>
@@ -39,31 +31,17 @@
           </div>
         </div>
       </div>
-      <ElEmpty v-else description="暂无菜单" />
-    </ElCard>
+      <ElEmpty v-else description="暂无菜单" :image-size="60" class="py-10" />
+    </div>
 
-    <!-- 编辑弹窗 -->
     <ElDialog v-model="dialogVisible" :title="editId ? '编辑菜单' : '新增菜单'" width="500px">
       <ElForm :model="formData" label-width="80px">
-        <ElFormItem label="菜单名称">
-          <ElInput v-model="formData.title" placeholder="如：定时任务" />
-        </ElFormItem>
-        <ElFormItem label="路由名称">
-          <ElInput v-model="formData.name" placeholder="如：Crontab（英文唯一标识）" />
-        </ElFormItem>
-        <ElFormItem label="路由路径">
-          <ElInput v-model="formData.path" placeholder="顶级：/crontab  子级：console" />
-        </ElFormItem>
-        <ElFormItem label="组件路径">
-          <ElInput v-model="formData.component" placeholder="父菜单留空，页面：/qinglong/crontab/index" />
-          <div style="color:#999;font-size:12px;margin-top:4px">有子菜单时留空，单独页面填完整路径</div>
-        </ElFormItem>
-        <ElFormItem label="图标">
-          <ElInput v-model="formData.icon" placeholder="ri:timer-line（Remix Icon）" />
-        </ElFormItem>
-        <ElFormItem label="排序">
-          <ElInputNumber v-model="formData.sort" :min="0" />
-        </ElFormItem>
+        <ElFormItem label="菜单名称"><ElInput v-model="formData.title" placeholder="如：定时任务" /></ElFormItem>
+        <ElFormItem label="路由名称"><ElInput v-model="formData.name" placeholder="英文唯一标识，如 Crontab" /></ElFormItem>
+        <ElFormItem label="路由路径"><ElInput v-model="formData.path" placeholder="顶级 /crontab，子级 console" /></ElFormItem>
+        <ElFormItem label="组件路径"><ElInput v-model="formData.component" placeholder="父菜单留空，页面 /qinglong/crontab/index" /></ElFormItem>
+        <ElFormItem label="图标"><ElInput v-model="formData.icon" placeholder="ri:timer-line" /></ElFormItem>
+        <ElFormItem label="排序"><ElInputNumber v-model="formData.sort" :min="0" /></ElFormItem>
       </ElForm>
       <template #footer>
         <ElButton @click="dialogVisible = false">取消</ElButton>
@@ -74,62 +52,40 @@
 </template>
 
 <script setup lang="ts">
-import { formatMenuTitle } from '@/utils/router'
 import { fetchGetMenuList, fetchCreateMenu, fetchUpdateMenu, fetchDeleteMenu } from '@/api/system-manage'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 defineOptions({ name: 'Menus' })
 
 interface FlatMenu {
-  id: number
-  name: string
-  path: string
-  component: string
-  meta: any
-  children?: any[]
-  _level: number
-  _parentId: number | null
+  id: number; name: string; path: string; component: string
+  meta: any; children?: any[]; _level: number; _parentId: number | null
 }
 
-const loading = ref(false)
-const saving = ref(false)
+const loading = ref(false); const saving = ref(false)
 const treeData = ref<any[]>([])
+const apiOnline = ref(true)
+const LS_KEY = 'ql_menu_backup'
+
 const flatList = computed<FlatMenu[]>(() => {
   const result: FlatMenu[] = []
   const flatten = (items: any[], level: number, parentId: number | null) => {
     items.forEach((item) => {
       result.push({ ...item, _level: level, _parentId: parentId })
-      if (item.children?.length) {
-        flatten(item.children, level + 1, item.id)
-      }
+      if (item.children?.length) flatten(item.children, level + 1, item.id)
     })
   }
   flatten(treeData.value, 0, null)
   return result
 })
 
-const dialogVisible = ref(false)
-const editId = ref<number | null>(null)
+const dialogVisible = ref(false); const editId = ref<number | null>(null)
 const parentMenu = ref<any>(null)
 const formData = reactive({ title: '', name: '', path: '', component: '', icon: '', sort: 0 })
 
-// 获取菜单树
-const getMenuList = async () => {
-  loading.value = true
-  try {
-    treeData.value = await fetchGetMenuList()
-  } catch (err: any) {
-    // API 不可用时使用本地路由作为回退显示
-    ElMessage.warning('菜单API未就绪，显示本地路由快照（需部署后端menu模块）')
-    treeData.value = getLocalRouteSnapshot()
-  } finally {
-    loading.value = false
-  }
-}
-
-// 本地路由快照（API不可用时的回退）
-const getLocalRouteSnapshot = (): any[] => {
-  const id = (n: string) => Math.abs(n.split('').reduce((a, c) => a + c.charCodeAt(0), 0))
+// ── 默认菜单 ──
+const defaultMenus = (): any[] => {
+  const id = (n: string) => Math.abs(n.split('').reduce((a: number, c: string) => a + c.charCodeAt(0), 0))
   return [
     { id: id('dash'), name: 'Dashboard', path: '/dashboard', component: '/qinglong/dashboard/index', meta: { title: '仪表盘', icon: 'ri:dashboard-line' } },
     { id: id('cron'), name: 'Crontab', path: '/crontab', component: '/qinglong/crontab/index', meta: { title: '定时任务', icon: 'ri:timer-line' } },
@@ -147,128 +103,196 @@ const getLocalRouteSnapshot = (): any[] => {
   ]
 }
 
-// 添加
+// ── localStorage 读写 ──
+const loadFromLocal = () => {
+  try {
+    const raw = localStorage.getItem(LS_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch { return null }
+}
+const saveToLocal = (data: any[]) => {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(data)) } catch { /* quota exceeded */ }
+}
+
+// ── 获取菜单 ──
+const getMenuList = async () => {
+  loading.value = true
+  try {
+    treeData.value = await fetchGetMenuList()
+    apiOnline.value = true
+    saveToLocal(treeData.value)
+  } catch {
+    apiOnline.value = false
+    const local = loadFromLocal()
+    treeData.value = local || defaultMenus()
+  } finally {
+    loading.value = false
+  }
+}
+
+// ── 生成临时 ID ──
+const nextLocalId = () => {
+  let max = 0
+  flatList.value.forEach(m => { if (m.id > max) max = m.id })
+  return max + 1
+}
+
+// ── 添加 ──
 const handleAdd = (parent: any | null) => {
-  editId.value = null
-  parentMenu.value = parent
-  formData.title = ''
-  formData.name = ''
-  formData.path = parent ? '' : '/'
-  formData.component = ''
-  formData.icon = ''
-  formData.sort = 0
+  editId.value = null; parentMenu.value = parent
+  formData.title = ''; formData.name = ''; formData.path = parent ? '' : '/'
+  formData.component = ''; formData.icon = ''; formData.sort = 0
   dialogVisible.value = true
 }
 
-// 编辑
+// ── 编辑 ──
 const handleEdit = (menu: any) => {
-  editId.value = menu.id
-  parentMenu.value = null
-  formData.title = formatMenuTitle(menu.meta?.title) || menu.name || ''
-  formData.name = menu.name || ''
-  formData.path = menu.path || ''
-  formData.component = menu.component || ''
-  formData.icon = menu.meta?.icon || ''
+  editId.value = menu.id; parentMenu.value = null
+  formData.title = menu.meta?.title || menu.name || ''
+  formData.name = menu.name || ''; formData.path = menu.path || ''
+  formData.component = menu.component || ''; formData.icon = menu.meta?.icon || ''
   formData.sort = menu.meta?.sort ?? 0
   dialogVisible.value = true
 }
 
-// 保存
-const handleSave = async () => {
-  saving.value = true
-  try {
-    const payload = {
-      name: formData.name || formData.title,
-      path: formData.path,
-      component: formData.component,
-      title: formData.title,
-      icon: formData.icon,
-      parentId: parentMenu.value?.id || null,
-      sort: formData.sort
+// ── 本地增删改 ──
+const localAdd = (payload: any) => {
+  const newItem: any = {
+    id: nextLocalId(), name: payload.name, path: payload.path,
+    component: payload.component || '',
+    meta: { title: payload.title, icon: payload.icon || '' }
+  }
+  if (payload.parentId) {
+    const addToParent = (items: any[]): boolean => {
+      for (const item of items) {
+        if (item.id === payload.parentId) {
+          if (!item.children) item.children = []
+          item.children.push(newItem)
+          return true
+        }
+        if (item.children && addToParent(item.children)) return true
+      }
+      return false
     }
-    if (editId.value) {
-      await fetchUpdateMenu(editId.value, payload)
-      ElMessage.success('已更新')
-    } else {
-      await fetchCreateMenu(payload)
-      ElMessage.success('已创建')
-    }
-    dialogVisible.value = false
-    getMenuList()
-  } catch (err: any) {
-    ElMessage.error(err?.message || '保存失败')
-  } finally {
-    saving.value = false
+    addToParent(treeData.value)
+  } else {
+    treeData.value.push(newItem)
   }
 }
 
-// 删除
+const localUpdate = (id: number, payload: any) => {
+  const update = (items: any[]) => {
+    for (const item of items) {
+      if (item.id === id) {
+        item.name = payload.name; item.path = payload.path
+        item.component = payload.component || ''
+        item.meta = { ...item.meta, title: payload.title, icon: payload.icon || '' }
+        if (payload.parentId !== undefined) { /* parent change handled separately */ }
+        return true
+      }
+      if (item.children && update(item.children)) return true
+    }
+    return false
+  }
+  update(treeData.value)
+}
+
+const localDelete = (id: number) => {
+  const remove = (items: any[]): boolean => {
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].id === id) { items.splice(i, 1); return true }
+      if (items[i].children && remove(items[i].children)) return true
+    }
+    return false
+  }
+  remove(treeData.value)
+}
+
+// ── 保存 ──
+const handleSave = async () => {
+  saving.value = true
+  const payload = {
+    name: formData.name || formData.title,
+    path: formData.path, component: formData.component,
+    title: formData.title, icon: formData.icon,
+    parentId: parentMenu.value?.id || null, sort: formData.sort
+  }
+  try {
+    if (apiOnline.value) {
+      if (editId.value) { await fetchUpdateMenu(editId.value, payload); ElMessage.success('已更新') }
+      else { await fetchCreateMenu(payload); ElMessage.success('已创建') }
+    } else {
+      if (editId.value) { localUpdate(editId.value, payload); ElMessage.success('已更新 (本地)') }
+      else { localAdd(payload); ElMessage.success('已创建 (本地)') }
+      saveToLocal(treeData.value)
+    }
+    dialogVisible.value = false; getMenuList()
+  } catch (err: any) {
+    // API 调用失败，回退到本地
+    if (editId.value) { localUpdate(editId.value, payload) }
+    else { localAdd(payload) }
+    saveToLocal(treeData.value)
+    apiOnline.value = false
+    ElMessage.success(editId.value ? '已更新 (本地离线模式)' : '已创建 (本地离线模式)')
+    dialogVisible.value = false; getMenuList()
+  } finally { saving.value = false }
+}
+
+// ── 删除 ──
 const handleDelete = async (menu: any) => {
   if (!menu.id) return
   try {
-    const msg = menu.children?.length
-      ? `删除 "${menu.meta?.title || menu.name}" 及其所有子菜单？`
-      : `确定删除 "${menu.meta?.title || menu.name}"？`
+    const msg = menu.children?.length ? `删除 "${menu.meta?.title || menu.name}" 及所有子菜单？` : `确定删除 "${menu.meta?.title || menu.name}"？`
     await ElMessageBox.confirm(msg, '警告', { type: 'warning' })
-    await fetchDeleteMenu(menu.id)
+    if (apiOnline.value) {
+      await fetchDeleteMenu(menu.id)
+    } else {
+      localDelete(menu.id)
+      saveToLocal(treeData.value)
+    }
     ElMessage.success('已删除')
     getMenuList()
-  } catch {}
+  } catch { }
 }
 
-// 上移
-const moveUp = async (index: number) => {
-  if (index === 0) return
-  await swapSort(index, index - 1)
-}
-
-// 下移
-const moveDown = async (index: number) => {
-  if (index >= flatList.value.length - 1) return
-  await swapSort(index, index + 1)
-}
-
-// 交换两个同级菜单的排序
+// ── 排序 (本地支持) ──
 const swapSort = async (i: number, j: number) => {
-  const a = flatList.value[i]
-  const b = flatList.value[j]
-  if (a._parentId !== b._parentId || a._level !== b._level) {
-    ElMessage.warning('只能与同级的菜单交换位置')
-    return
-  }
-  // 交换 sort 值
-  const sortA = a.meta?.sort ?? i
-  const sortB = b.meta?.sort ?? j
-  await fetchUpdateMenu(a.id, { sort: sortB })
-  await fetchUpdateMenu(b.id, { sort: sortA })
-  getMenuList()
-}
-
-// 缩进：变成上一个菜单的子菜单
-const indent = async (index: number) => {
-  if (index === 0) return
-  const prev = flatList.value[index - 1]
-  const current = flatList.value[index]
-  if (prev._level > current._level) return // 只能缩进到同级或上级
-  await fetchUpdateMenu(current.id, { parentId: prev.id, sort: 0 })
-  ElMessage.success(`"${current.meta?.title || current.name}" 已变为 "${prev.meta?.title || prev.name}" 的子菜单`)
-  getMenuList()
-}
-
-// 升级：移出父菜单变成同级
-const outdent = async (index: number) => {
-  const current = flatList.value[index]
-  if (current._level === 0) return
-  // 找到父菜单的父菜单
-  let grandparent: number | null = null
-  for (let i = index - 1; i >= 0; i--) {
-    if (flatList.value[i].id === current._parentId) {
-      grandparent = flatList.value[i]._parentId
-      break
+  const a = flatList.value[i]; const b = flatList.value[j]
+  if (a._parentId !== b._parentId || a._level !== b._level) { ElMessage.warning('只能与同级菜单交换位置'); return }
+  if (apiOnline.value) {
+    const sortA = a.meta?.sort ?? i; const sortB = b.meta?.sort ?? j
+    await fetchUpdateMenu(a.id, { sort: sortB }); await fetchUpdateMenu(b.id, { sort: sortA })
+  } else {
+    const items = treeData.value
+    const swapInTree = (list: any[]) => {
+      const ai = list.findIndex((m: any) => m.id === a.id)
+      const bi = list.findIndex((m: any) => m.id === b.id)
+      if (ai >= 0 && bi >= 0) { [list[ai], list[bi]] = [list[bi], list[ai]] }
+      list.forEach((m: any) => { if (m.children) swapInTree(m.children) })
     }
+    swapInTree(items); saveToLocal(treeData.value)
+    ElMessage.success('已排序')
   }
-  await fetchUpdateMenu(current.id, { parentId: grandparent, sort: 0 })
-  ElMessage.success(`"${current.meta?.title || current.name}" 已升级`)
+  getMenuList()
+}
+const moveUp = (i: number) => { if (i > 0) swapSort(i, i - 1) }
+const moveDown = (i: number) => { if (i < flatList.value.length - 1) swapSort(i, i + 1) }
+
+const indent = async (i: number) => {
+  if (i === 0) return
+  const prev = flatList.value[i - 1]; const cur = flatList.value[i]
+  if (apiOnline.value) await fetchUpdateMenu(cur.id, { parentId: prev.id, sort: 0 })
+  else { localUpdate(cur.id, { parentId: prev.id }); saveToLocal(treeData.value) }
+  ElMessage.success(`"${cur.meta?.title || cur.name}" → "${prev.meta?.title || prev.name}" 的子菜单`)
+  getMenuList()
+}
+const outdent = async (i: number) => {
+  const cur = flatList.value[i]; if (cur._level === 0) return
+  let gp: number | null = null
+  for (let j = i - 1; j >= 0; j--) { if (flatList.value[j].id === cur._parentId) { gp = flatList.value[j]._parentId; break } }
+  if (apiOnline.value) await fetchUpdateMenu(cur.id, { parentId: gp, sort: 0 })
+  else { localUpdate(cur.id, { parentId: gp }); saveToLocal(treeData.value) }
+  ElMessage.success(`"${cur.meta?.title || cur.name}" 已升级`)
   getMenuList()
 }
 
@@ -276,55 +300,18 @@ onMounted(() => getMenuList())
 </script>
 
 <style scoped lang="scss">
-.menu-list {
-  border: 1px solid #f0f0f0;
-  border-radius: 8px;
-}
-
+.menu-list { border: 1px solid #f0f0f0; border-radius: 8px; }
 .menu-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-bottom: 1px solid #f5f5f5;
-  transition: background 0.15s;
-
-  &:hover {
-    background: #f9fafb;
-  }
-
+  display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+  border-bottom: 1px solid #f5f5f5; transition: background 0.15s;
+  &:hover { background: #f9fafb; }
   &:last-child { border-bottom: none; }
 }
-
-.menu-sort-btns {
-  display: flex;
-  gap: 0;
-
+.menu-sort-btns { display: flex; gap: 0;
   .el-button { padding: 2px 4px; font-size: 14px; }
 }
-
-.menu-icon {
-  width: 24px;
-  text-align: center;
-  color: var(--el-color-primary);
-}
-
-.menu-title {
-  flex: 1;
-  font-size: 14px;
-  font-weight: 500;
-  min-width: 80px;
-}
-
-.menu-path {
-  font-size: 12px;
-  color: #999;
-  font-family: monospace;
-}
-
-.menu-actions {
-  display: flex;
-  gap: 2px;
-  flex-shrink: 0;
-}
+.menu-icon { width: 24px; text-align: center; color: var(--el-color-primary); font-size: 16px; }
+.menu-title { flex: 1; font-size: 14px; font-weight: 500; min-width: 80px; }
+.menu-path { font-size: 12px; color: #999; font-family: monospace; }
+.menu-actions { display: flex; gap: 2px; flex-shrink: 0; }
 </style>
