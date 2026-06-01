@@ -119,10 +119,32 @@ const getMenuList = async () => {
   try {
     treeData.value = await fetchGetMenuList()
   } catch (err: any) {
-    ElMessage.error('获取菜单失败: ' + (err.message || ''))
+    // API 不可用时使用本地路由作为回退显示
+    ElMessage.warning('菜单API未就绪，显示本地路由快照（需部署后端menu模块）')
+    treeData.value = getLocalRouteSnapshot()
   } finally {
     loading.value = false
   }
+}
+
+// 本地路由快照（API不可用时的回退）
+const getLocalRouteSnapshot = (): any[] => {
+  const id = (n: string) => Math.abs(n.split('').reduce((a, c) => a + c.charCodeAt(0), 0))
+  return [
+    { id: id('dash'), name: 'Dashboard', path: '/dashboard', component: '/qinglong/dashboard/index', meta: { title: '仪表盘', icon: 'ri:dashboard-line' } },
+    { id: id('cron'), name: 'Crontab', path: '/crontab', component: '/qinglong/crontab/index', meta: { title: '定时任务', icon: 'ri:timer-line' } },
+    { id: id('sub'), name: 'Subscription', path: '/subscription', component: '/qinglong/subscription/index', meta: { title: '订阅管理', icon: 'ri:git-repository-line' } },
+    { id: id('env'), name: 'Env', path: '/env', component: '/qinglong/env/index', meta: { title: '环境变量', icon: 'ri:settings-3-line' } },
+    { id: id('cfg'), name: 'Config', path: '/config', component: '/qinglong/config/index', meta: { title: '配置文件', icon: 'ri:file-list-3-line' } },
+    { id: id('scr'), name: 'Script', path: '/script', component: '/qinglong/script/index', meta: { title: '脚本管理', icon: 'ri:code-box-line' } },
+    { id: id('dep'), name: 'Dependence', path: '/dependence', component: '/qinglong/dependence/index', meta: { title: '依赖管理', icon: 'ri:archive-line' } },
+    { id: id('log'), name: 'Log', path: '/log', component: '/qinglong/log/index', meta: { title: '日志管理', icon: 'ri:file-text-line' } },
+    { id: id('diff'), name: 'Diff', path: '/diff', component: '/qinglong/diff/index', meta: { title: '对比工具', icon: 'ri:sparkling-line' } },
+    { id: id('set'), name: 'Setting', path: '/setting', component: '/qinglong/setting/index', meta: { title: '系统设置', icon: 'ri:settings-2-line' } },
+    { id: id('sys'), name: 'System', path: '/system', component: '/index/index', meta: { title: '菜单管理', icon: 'ri:settings-line' }, children: [
+      { id: id('menu'), name: 'MenuManage', path: 'menu', component: '/system/menu/index', meta: { title: '配置菜单', icon: 'ri:menu-line' } }
+    ]},
+  ]
 }
 
 // 添加
